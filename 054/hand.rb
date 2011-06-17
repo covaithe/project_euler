@@ -10,8 +10,6 @@ class Hand
 
     compute_count_by_rank
     decide_kind
-
-    
   end
 
   def decide_kind
