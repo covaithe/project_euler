@@ -2,6 +2,18 @@
 require_relative '../hand.rb'
 
 describe "Hand" do
+  royal_flush = Hand.new("AS KS QS JS TS")
+  straight_flush = Hand.new("6S 2S 3S 4S 5S")
+  four_of_a_kind = Hand.new("6S 6C 6D 6H 5S")
+  full_house = Hand.new("6S 6C 6D 8H 8S")
+  flush = Hand.new("6S 7S 8S 2S 9S")
+  straight = Hand.new("6S 7C 8S 9S TD")
+  three_of_a_kind = Hand.new("6S 6C 6S 9S TD")
+  two_pair = Hand.new("6S 6C 9S 9S TD")
+  one_pair = Hand.new("6S 6C JS 9S TD")
+  high_card = Hand.new("2C 9D TC JS QD")
+   
+
   context "AS KS QS JS TS" do
     before(:each) do
       @hand = Hand.new("AS KS QS JS TS")
@@ -22,7 +34,7 @@ describe "Hand" do
 
 
   context "royal flush" do
-    [ Hand.new("AS KS QS JS TS"),
+    [ royal_flush,
       Hand.new("KS AS QS JS TS"),
     ].each do |hand| 
       it "#{hand} should be a royal flush" do
@@ -45,7 +57,7 @@ describe "Hand" do
   end
 
   context "straight flush" do
-    [ Hand.new("6S 2S 3S 4S 5S"),
+    [ straight_flush,
     ].each do |hand| 
       it "#{hand} should be a straight flush" do
         hand.should be_straight_flush
@@ -60,9 +72,9 @@ describe "Hand" do
       end
     end
   end
-
+  
   context "four of a kind" do
-    [ Hand.new("6S 6C 6D 6H 5S"),
+    [ four_of_a_kind,
       Hand.new("AS AC AD AH 5S"),
     ].each do |hand| 
       it "#{hand} should be four of a kind" do
@@ -80,7 +92,7 @@ describe "Hand" do
   end
   
   context "full house" do
-    [ Hand.new("6S 6C 6D 8H 8S"),
+    [ full_house,
       Hand.new("AS AC AD KH KS"),
     ].each do |hand| 
       it "#{hand} should be full house" do
@@ -98,7 +110,7 @@ describe "Hand" do
   end
 
   context "flush" do
-    [ Hand.new("6S 7S 8S 2S 9S"),
+    [ flush,
       Hand.new("AC 3C JC KC QC"),
     ].each do |hand| 
       it "#{hand} should be flush" do
@@ -116,8 +128,8 @@ describe "Hand" do
   end
   
   context "straight" do
-    [ Hand.new("6S 7C 8S 9S TD"),
-      Hand.new("9C TC JC QC KC"),
+    [ straight,
+      Hand.new("9C TC JC QS KC"),
     ].each do |hand| 
       it "#{hand} should be straight" do
         hand.should be_straight
@@ -134,7 +146,7 @@ describe "Hand" do
   end
   
   context "three of a kind" do
-    [ Hand.new("6S 6C 6S 9S TD"),
+    [ three_of_a_kind,
       Hand.new("9C 9C 9C QC KC"),
     ].each do |hand| 
       it "#{hand} should be three of a kind" do
@@ -152,7 +164,7 @@ describe "Hand" do
   end
   
   context "two pair" do
-    [ Hand.new("6S 6C 9S 9S TD"),
+    [ two_pair,
       Hand.new("9C 9C QC QC KC"),
     ].each do |hand| 
       it "#{hand} should be two pair" do
@@ -170,7 +182,7 @@ describe "Hand" do
   end
   
   context "one pair" do
-    [ Hand.new("6S 6C JS 9S TD"),
+    [ one_pair,
       Hand.new("9C 9C AC QC KC"),
     ].each do |hand| 
       it "#{hand} should be one pair" do
@@ -188,14 +200,125 @@ describe "Hand" do
   end
 
   context "should know what kind of hand it is" do 
-    [ [ Hand.new("AS KS QS JS TS"), "royal flush"],
-      [ Hand.new("KS QS JS TS 9S"), "straight flush"],
-      # [ Hand.new("KS KC KH KD 9S"), "four of a kind"],
+    [ [ royal_flush, Hand::ROYAL_FLUSH],
+      [ straight_flush, Hand::STRAIGHT_FLUSH],
+      [ four_of_a_kind, Hand::FOUR_OF_A_KIND],
+      [ full_house, Hand::FULL_HOUSE ],
+      [ flush, Hand::FLUSH ],
+      [ straight, Hand::STRAIGHT ],
+      [ three_of_a_kind, Hand::THREE_OF_A_KIND ],
+      [ two_pair, Hand::TWO_PAIR ],
+      [ one_pair, Hand::ONE_PAIR ],
+      [ high_card, Hand::HIGH_CARD ],
     ].each do |hand, kind| 
       it "#{hand} should be a #{kind}" do
         hand.kind.should == kind
       end
     end
   end
-  
+
+  RSpec::Matchers.define :beat do |otherhand|
+    match do |hand|
+      hand.beats? otherhand
+    end
+
+    failure_message_for_should do |hand|
+      "#{hand} should have beat #{otherhand} but did not"
+    end
+  end
+
+  context "should be able to tell if one hand beats another" do
+    it "Royal flush should beat high card" do
+      royal_flush.should beat high_card
+      high_card.should_not beat royal_flush
+    end
+    it "royal flush should beat one pair" do
+      royal_flush.should beat one_pair
+      one_pair.should_not beat royal_flush
+    end
+    it "royal flush should beat two pair" do
+      royal_flush.should beat two_pair
+      two_pair.should_not beat royal_flush
+    end
+    it "royal flush should beat three of a kind" do
+      royal_flush.should beat three_of_a_kind
+      three_of_a_kind.should_not beat royal_flush
+    end
+    it "royal flush should beat straight" do
+      royal_flush.should beat straight
+      straight.should_not beat royal_flush
+    end
+    it "royal flush should beat flush" do
+      royal_flush.should beat flush
+      flush.should_not beat royal_flush
+    end
+    it "royal flush should beat full house" do
+      royal_flush.should beat full_house
+      full_house.should_not beat royal_flush
+    end
+    it "royal flush should beat four of a kind" do
+      royal_flush.should beat four_of_a_kind
+      four_of_a_kind.should_not beat royal_flush
+    end
+    it "royal flush should beat straight flush" do
+      royal_flush.should beat straight_flush
+      straight_flush.should_not beat royal_flush
+    end
+    it "royal flush should not beat royal flush" do
+      a = Hand.new("AS KS QS JS TS")
+      b = Hand.new("AH KH QH JH TH")
+      a.should_not beat b
+      b.should_not beat a
+    end
+
+    it "straight flush should beat four of a kind" do
+      straight_flush.should beat four_of_a_kind
+      four_of_a_kind.should_not beat straight_flush
+    end
+    it "straight flush should beat full house" do
+      straight_flush.should beat full_house
+      full_house.should_not beat straight_flush
+    end
+    it "straight flush should beat flush" do
+      straight_flush.should beat flush
+      flush.should_not beat straight_flush
+    end
+    it "straight flush should beat straight" do
+      straight_flush.should beat straight
+      straight.should_not beat straight_flush
+    end
+    it "straight flush should beat three of a kind" do
+      straight_flush.should beat three_of_a_kind
+      three_of_a_kind.should_not beat straight_flush
+    end
+    it "straight flush should beat two pair" do
+      straight_flush.should beat two_pair
+      two_pair.should_not beat straight_flush
+    end
+    it "straight flush should beat one pair" do
+      straight_flush.should beat one_pair
+      one_pair.should_not beat straight_flush
+    end
+    it "straight flush should beat high card" do
+      straight_flush.should beat high_card
+      high_card.should_not beat straight_flush
+    end
+    it "between two straight flushes the high card should win" do
+      a = Hand.new("2S 3S 4S 5S 6S")
+      b = Hand.new("4H 5H 6H 7H 8H")
+
+      a.should_not beat b
+      b.should beat a
+    end
+
+    it "pair jacks should beat pair threes even if the latter has king high" do
+      a = Hand.new("JH JS 2H 3H 4H")
+      b = Hand.new("3S 3C KS JH QH")
+
+      a.should beat b
+      b.should_not beat a
+    end
+    
+  end
+
 end

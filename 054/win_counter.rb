@@ -1,7 +1,6 @@
 
 
 require_relative "./hand.rb"
-require_relative "./rflush_decider.rb"
 
 games = File.readlines("poker.txt").map do |line|
   a = line[0,14] 
@@ -11,12 +10,16 @@ end
 
 n = 0
 sum = 0
-games.inject do |sum, game| 
+wins = []
+games.each do |game|
   a = game[0]
   b = game[1]
-  n += 1
-  # puts "game #{n}, #{a} vs #{b}"
-  sum += 1 if RFlushDecider.choose_winner(a, b) == a
+
+  win = a.beats? b
+  puts "#{a} #{win ? 'beats   ' : 'loses to'} #{b}:  #{a.kind_s} vs #{b.kind_s}"
+  if win
+    wins << game
+  end
 end
 
-puts sum
+puts "wins:  #{wins.length}"
