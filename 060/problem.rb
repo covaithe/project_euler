@@ -9,6 +9,7 @@
 
 require_relative '../lib/Primes.rb'
 require_relative '../lib/permutations'
+require 'set'
 
 module Enumerable
   def pairs
@@ -34,21 +35,10 @@ module Enumerable
   end
 
   def meets_conditions?
-    pairwise_concatenations.all? {|n| n.is_prime?}
-  end
-end
-
-class Cluster
-  def initialize
-    self.primes = []
-  end
-
-  def <<(pair)
-    self.pairs << pair
-  end
-
-  def to_s
-    "[" + pairs.map(&:to_s).join(',') + "]"
+    pairwise_concatenations.each do |n| 
+      return false unless n.is_prime?
+    end
+    true
   end
 end
 
@@ -124,11 +114,14 @@ class Problem
   end
 
   def combines_nicely_with?(pairs, list)
-    list.all? { |q| pairs.include?(q) }
+    list.each do |q|
+      return false unless pairs.include?(q)
+    end
+    true
   end
 
   def record_pair(p,q)
-    a = primes_that_pair_with[p] ||= []
+    a = primes_that_pair_with[p] ||= Set.new
     a << q
   end
 
