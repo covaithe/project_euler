@@ -70,131 +70,67 @@ end
 class Problem
 
   def initialize
-    @p_index = 1
-    @q_index = 0
-    self.known_pairs = []
     self.primes_that_pair_with = {}
+    self.triples = []
+    self.quads = []
   end
 
-  attr_accessor :p, :q, :p_index, :q_index, :known_pairs, :primes_that_pair_with
+  attr_accessor :primes_that_pair_with, :triples, :quads
 
   def solve
 
     Primes.calculate_primes_to(100000)
 
-    count = 0
+    i = 1
+
     loop do
-      count += 1
-      pair = choose_next_primes
+      i += 1
+      p = Primes.known_primes[i]
+      puts "Checking #{p}...."
 
-      next unless pair.ok?
-      append_pair(pair)
-      #puts primes_that_pair_with.inspect if count % 1000 == 0
+      # find all primes lower than p that pair with it.  
+      1.upto(i-1) do |j|
+        q = Primes.known_primes[j]
+        record_pair(p,q) if [p,q].meets_conditions?
+      end
 
-      break if check_for_answer pair
-    end
+      p_pairs = primes_that_pair_with[p] || []
 
-    stuff = [1, 2, 3, 4]
-    sample = [ 3, 7, 109, 673 ]
+      # see if we can make a five out of p plus a quad. 
+      answer = quads.find { |quad| combines_nicely_with?(p,quad) }
+      if answer
+        a = [p] + answer
+        puts "#{a.inspect} ==> #{a.inject(&:+)}"
+        break
+      end
 
-    #puts stuff.meets_conditions?
-    #puts sample.meets_conditions?
+      #okay, try to make fours from this plus the triples. 
+      triples.each do |triple|
+        if combines_nicely_with?(p, triple)
+          quads << [p] + triple
+        end
+      end
 
-    indices = [0, 1, 2, 3, 4]
-
-  end
-
-  def append_pair pair
-    a = primes_that_pair_with[pair.a] ||= []
-    a << pair.b
-  end
-
-  def choose_next_primes
-    self.q_index += 1
-    print = false
-    if q_index == p_index
-      self.p_index += 1
-      self.q_index = 1
-      print = true
-    end
-
-    p = Primes.known_primes[p_index]
-    q = Primes.known_primes[q_index]
-
-    if print
-      puts "Checking #{p}..."
-    end
-    PrimePair.new(p, q)
-  end
-
-  COUNT = 5
-
-  def check_for_answer pair
-    # our chain of pairwise primes consists of pair.a, pair.b, and 3 other things
-    # which have to be found in primes_that_pair_with[pair.b].  We check the 
-    # smallest things in that list first. 
-
-    pwb = primes_that_pair_with[pair.b]
-    return false if pwb.nil?
-    candidates = pwb.reverse
-    return false if candidates.size < COUNT - 2
-    
-    Permutations.of(candidates, COUNT-2).each do |perm|
-      x = pair.to_a.concat(perm)
-      #puts "checking #{x.inspect}: #{x.meets_conditions?}"
-      if meets_conditions?(x)
-        puts "#{x.inspect} ==> #{x.inject(&:+)}"
-        return true
+      # look for new triples.  A triple means something in p's pair list that pairs with another thing
+      # in p's pair list. 
+      p_pairs.each do |q|
+        (primes_that_pair_with[q] || []).each do |r|
+          triples << [p,q,r] if p_pairs.include?(r)
+        end
       end
     end
-    false
   end
 
-  def meets_conditions?(list)
-    # so we have a list like a,b,c,d,e.  We know that a pairs with b, and b pairs with 
-    # c, d, and e.  
-    a,b,c,d,e = *list
-    a_pairs = primes_that_pair_with[a]
-    return false unless a_pairs.include?(c)
-    return false unless a_pairs.include?(d)
-    return false unless a_pairs.include?(e)
-
-    c_pairs = primes_that_pair_with[c]
-    return false unless c_pairs.include?(d)
-    return false unless c_pairs.include?(e)
-
-    return primes_that_pair_with[d].include?(e)
+  def combines_nicely_with?(p, list)
+    p_pairs = primes_that_pair_with[p]
+    return false if p_pairs.nil?
+    #puts "pairs for #{p} are #{p_pairs.inspect}"
+    list.all? { |q| p_pairs.include?(q) }
   end
 
-  def grow_cluster orig
-    
-    known_pairs.each do |pair|
-      break if pair.a > orig.last
-      next unless pair.a == orig.last
-      puts "Considering #{orig} and #{pair}"
-      #puts known_pairs.inspect
-      c = orig.to_a.dup.concat(pair.to_a).uniq
-      puts "#{c.inspect} ==> #{c.meets_conditions?}" if c.meets_conditions?
-    end
-
-  end
-
-  PrimePair = Struct.new(:a, :b) do
-    def to_s
-      "[#{a}, #{b}]"
-    end
-
-    def to_a
-      [ a, b ]
-    end
-
-    def last
-      b
-    end
-
-    def ok?
-      [a,b].meets_conditions?
-    end
+  def record_pair(p,q)
+    a = primes_that_pair_with[p] ||= []
+    a << q
   end
 
 end
