@@ -57,11 +57,9 @@ class Integer
     i = 0
     limit = Math.sqrt(self).ceil
     Primes.calculate_primes_to(limit)
-    loop do
-      d = Primes.known_primes[i]
+    Primes.known_primes.each do |d|
       break if d > limit
       return false if self % d == 0
-      i += 1
     end
     true
   end
@@ -88,49 +86,54 @@ class Problem
       p = Primes.known_primes[i]
       puts "Checking #{p}...."
 
+      #break if p > 2500
+
       # find all primes lower than p that pair with it.  
-      1.upto(i-1) do |j|
-        q = Primes.known_primes[j]
+      Primes.known_primes.drop(1).each do |q|
+        break if q >= p
         record_pair(p,q) if [p,q].meets_conditions?
       end
 
-      p_pairs = primes_that_pair_with[p] || []
+      pairs = pairs_for(p)
 
       # see if we can make a five out of p plus a quad. 
-      answer = quads.find { |quad| combines_nicely_with?(p,quad) }
+      answer = quads.find { |quad| combines_nicely_with?(pairs,quad) }
       if answer
         a = [p] + answer
         puts "#{a.inspect} ==> #{a.inject(&:+)}"
+        puts quads.count
+        puts triples.count
         break
       end
 
       #okay, try to make fours from this plus the triples. 
       triples.each do |triple|
-        if combines_nicely_with?(p, triple)
+        if combines_nicely_with?(pairs, triple)
           quads << [p] + triple
         end
       end
 
       # look for new triples.  A triple means something in p's pair list that pairs with another thing
       # in p's pair list. 
-      p_pairs.each do |q|
-        (primes_that_pair_with[q] || []).each do |r|
-          triples << [p,q,r] if p_pairs.include?(r)
+      pairs.each do |q|
+        pairs_for(q).each do |r|
+          triples << [p,q,r] if pairs.include?(r)
         end
       end
     end
   end
 
-  def combines_nicely_with?(p, list)
-    p_pairs = primes_that_pair_with[p]
-    return false if p_pairs.nil?
-    #puts "pairs for #{p} are #{p_pairs.inspect}"
-    list.all? { |q| p_pairs.include?(q) }
+  def combines_nicely_with?(pairs, list)
+    list.all? { |q| pairs.include?(q) }
   end
 
   def record_pair(p,q)
     a = primes_that_pair_with[p] ||= []
     a << q
+  end
+
+  def pairs_for(p)
+    primes_that_pair_with[p] || []
   end
 
 end
